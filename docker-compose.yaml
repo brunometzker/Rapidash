@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  redis:
+    image: redis
+    volumes:
+      - /tmp/redis/data:/data
+  rapidash:
+    build:
+      context: .
+      dockerfile: web.Dockerfile
+    depends_on:
+      - redis
+    ports:
+      - "8080"
+    environment:
+      REDIS_HOST: redis
