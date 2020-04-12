@@ -1,35 +1,30 @@
 import Vapor
 
-final class PokemonTypeService {
-    private let cachingService: CachingService
+final class PokemonTypeService: Service {
+    let keyedCache: KeyedCache
+    let pokeApi: PokeApiProxy
     
-    init(using service: CachingService) {
-        self.cachingService = service
+    init(keyedCache: KeyedCache, pokeApi: PokeApiProxy) {
+        self.keyedCache = keyedCache
+        self.pokeApi = pokeApi
     }
     
-    public func getTypeByIdAsync(on container: Container, id: Int) throws -> Future<PokemonType> {
+    public func typeById(id: Int, eventLoop: EventLoop) -> Future<ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>> {
         let cacheKey = K.Services.PokeAPI.typeCacheKey.replacingOccurrences(of: K.Services.PokeAPI.typeIdPlaceholder, with: "\(id)")
         
-        let cachedValue: Future<LegacyPokemonTypeResponseDTO?> = try cachingService.getValue(with: cacheKey, on: container)
-            
-        return cachedValue.flatMap { responseDto in
-            if let value = responseDto {
-                return container.future(value.adapt())
+        return self.keyedCache.get(cacheKey, as: LegacyPokemonTypeResponseDTO.self).then { (cachedDto) -> Future<ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>> in
+            if let safeCachedDto = cachedDto {
+                return eventLoop.future(ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>(success: true, data: PokemonTypeResponseDTO(type: safeCachedDto.adapt()), error: nil))
             }
             
-            return self.fetchTypeByIdAsync(using: try container.client(), of: id).map { value in
-                self.cachingService.cacheValue(of: container.future(value), with: cacheKey, on: container)
-                return value.adapt()
-            }
-        }
-    }
-    
-    private func fetchTypeByIdAsync(using client: Client, of id: Int) -> Future<LegacyPokemonTypeResponseDTO> {
-        return client.get("https://\(K.Services.PokeAPI.host)/\(K.Services.PokeAPI.version)/\(K.Services.PokeAPI.typeRoute)/\(id)").flatMap { (response) -> EventLoopFuture<LegacyPokemonTypeResponseDTO> in
-            do {
-                return try response.content.decode(LegacyPokemonTypeResponseDTO.self)
-            } catch {
-                return response.future(error: error)
+            return self.pokeApi.typeById(id: id).then { (responseDto) -> EventLoopFuture<ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>> in
+                if responseDto.success {
+                    self.keyedCache.set(cacheKey, to: responseDto.data!)
+                    
+                    return eventLoop.future(ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>(success: true, data: PokemonTypeResponseDTO(type: responseDto.data!.adapt()), error: nil))
+                }
+                
+                return eventLoop.future(ResponseDTO<PokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>(success: false, data: nil, error: responseDto.error))
             }
         }
     }

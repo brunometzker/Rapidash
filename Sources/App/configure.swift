@@ -3,7 +3,6 @@ import Redis
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
-    // Register providers first
     try services.register(RedisProvider())
     
     var redisConfig = RedisClientConfig()
@@ -21,16 +20,24 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     
     config.prefer(DatabaseKeyedCache<ConfiguredDatabase<RedisDatabase>>.self, for: KeyedCache.self)
     
-    services.register(PokeApiService.self) { container in
+    services.register(PokeApiProxy.self) { container in
         return PokeApiService(client: try container.client())
     }
     
     services.register(PokemonSpeciesService.self) { container in
-        return PokemonSpeciesService(keyedCache: try container.make(KeyedCache.self), pokeApi: try container.make(PokeApiService.self))
+        return PokemonSpeciesService(keyedCache: try container.make(KeyedCache.self), pokeApi: try container.make(PokeApiProxy.self))
     }
     
     services.register(PokemonSpeciesController.self) { container in
         return PokemonSpeciesController(speciesService: try container.make(PokemonSpeciesService.self))
+    }
+    
+    services.register(PokemonTypeService.self) { container in
+        return PokemonTypeService(keyedCache: try container.make(KeyedCache.self), pokeApi: try container.make(PokeApiProxy.self))
+    }
+    
+    services.register(PokemonTypeController.self) { container in
+        return PokemonTypeController(typeService: try container.make(PokemonTypeService.self))
     }
     
     // Register routes to the router

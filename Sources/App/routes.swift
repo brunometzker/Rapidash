@@ -14,5 +14,9 @@ public func routes(_ router: Router) throws {
         return try speciesController.getSpeciesById(req)
     }
     
-//    router.get("pokemon", "type", Int.parameter, use: pokemonTypeController.getTypeById)
+    router.get("pokemon", "type", Int.parameter) { req -> Future<Response> in
+        let typeController = try req.make(PokemonTypeController.self)
+        
+        return try typeController.getTypeById(req)
+    }
 }

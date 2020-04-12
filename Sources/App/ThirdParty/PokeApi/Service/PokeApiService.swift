@@ -27,7 +27,9 @@ class PokeApiService: PokeApiProxy, Service {
         }, dataType: LegacyPokemonSpeciesResponseDTO.self, failedWhenStatusIsOneOf: [500], errorType: LocalizedErrorMessageResponseDTO.self)
     }
     
-    func typeById(id: Int) -> Void {
-        
+    func typeById(id: Int) -> Future<ResponseDTO<LegacyPokemonTypeResponseDTO, LocalizedErrorMessageResponseDTO>> {
+        return self.client.fetch(request: { (client) -> Future<Response> in
+            return client.get("https://\(K.Services.PokeAPI.host)/\(K.Services.PokeAPI.version)/\(K.Services.PokeAPI.typeRoute)/\(id)")
+        }, dataType: LegacyPokemonTypeResponseDTO.self, failedWhenStatusIsOneOf: [500], errorType: LocalizedErrorMessageResponseDTO.self)
     }
 }
