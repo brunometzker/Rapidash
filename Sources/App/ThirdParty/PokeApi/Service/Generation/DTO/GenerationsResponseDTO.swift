@@ -11,7 +11,7 @@ struct GenerationsResponseDTO: Content, Adaptable {
             let id = Int.init(url.split(separator: "/").last ?? "0")
             let name = legacySpecies.name
             
-            return PokemonSpecies(id: id!, name: name, moves: nil, sprites: nil, types: nil)
+            return PokemonSpecies(id: id!, name: name, moves: nil, sprites: nil, types: nil, defaultImage: nil)
         }
     }
 }

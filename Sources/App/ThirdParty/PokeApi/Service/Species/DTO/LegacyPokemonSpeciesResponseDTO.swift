@@ -1,6 +1,6 @@
 import Vapor
 
-struct PokemonSpeciesResponseDTO: Content, Adaptable {
+struct LegacyPokemonSpeciesResponseDTO: Content, Adaptable {
     typealias To = PokemonSpecies
     
     let id: Int
@@ -29,6 +29,8 @@ struct PokemonSpeciesResponseDTO: Content, Adaptable {
             return PokemonType(id: typeId!, name: typeName, doubleDamageFrom: nil, doubleDamageTo: nil, halfDamageFrom: nil, halfDamageTo: nil, noDamageFrom: nil, noDamageTo: nil)
         }
 
-        return PokemonSpecies(id: pokemonId, name: pokemonName, moves: pokemonMoves, sprites: pokemonSprites, types: pokemonTypes)
+        let defaultImage = "https://\(K.Services.PokeResBastionBot.host)\(K.Services.PokeResBastionBot.pokemonImagePath)/\(pokemonId).\(K.Services.PokeResBastionBot.imageExtension)"
+        
+        return PokemonSpecies(id: pokemonId, name: pokemonName, moves: pokemonMoves, sprites: pokemonSprites, types: pokemonTypes, defaultImage: defaultImage)
     }
 }

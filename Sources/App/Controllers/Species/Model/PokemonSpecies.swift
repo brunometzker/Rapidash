@@ -6,4 +6,5 @@ struct PokemonSpecies: Content {
     let moves: [PokemonMove]?
     let sprites: [String?]?
     let types: [PokemonType]?
+    let defaultImage: String?
 }

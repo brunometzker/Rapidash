@@ -5,10 +5,12 @@ services:
     image: redis
     volumes:
       - /tmp/redis/data:/data
+    ports:
+      - "6379:6379"
   rapidash:
     build:
       context: .
-      dockerfile: web.Dockerfile
+      dockerfile: Dockerfile
     depends_on:
       - redis
     ports:
